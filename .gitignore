@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Build / packaging
+build/
+dist/
+wheels/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# AI / ML artifacts (directories)
+data/
+datasets/
+models/
+checkpoints/
+runs/
+wandb/
+mlruns/
+outputs/
+artifacts/
+lora_adapter/
+
+# Heavy model weight formats
+*.bin
+*.msgpack
+*.gguf
+*.ggml
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pkl
+*.joblib
+*.npz
+*.npy
+
+# Dataset / archive formats
+*.arrow
+*.parquet
+*.zarr
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.bz2
+*.gz
+
+# Logs / temp — runtime artifacts only; historical experiments are in archive/
+logs/lora_adapter/
+logs/*.log
+tmp/
+*.log
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+!.env.myexample
+*.key
+*.pem
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+
+# Customized
+mydatasets/
