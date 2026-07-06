@@ -1,0 +1,2 @@
+"""Small vision training examples."""
+

@@ -29,6 +29,7 @@ wheels/
 # AI / ML artifacts (directories)
 data/
 datasets/
+cache/
 models/
 checkpoints/
 runs/
@@ -66,6 +67,8 @@ lora_adapter/
 *.gz
 
 # Logs / temp — runtime artifacts only; historical experiments are in archive/
+logs/
+!logs/.gitkeep
 logs/lora_adapter/
 logs/*.log
 tmp/
