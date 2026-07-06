@@ -10,6 +10,7 @@ This directory contains from-scratch CIFAR-10 classifiers for learning the stand
 - `logging_utils.py`: TensorBoard and W&B logging examples.
 - `models/cnn/model.py`: explicit small ResNet-style CNN.
 - `models/vit/model.py`: explicit tiny ViT with local patch embedding, attention, MLP, and encoder blocks.
+- `configs/vision/cnn.yaml`, `configs/vision/vit.yaml`: experiment configs.
 - `scripts/train_cnn.sh`, `scripts/train_vit.sh`: runnable training presets.
 
 ## Quick Runs
@@ -22,8 +23,38 @@ vision/scripts/train_cnn.sh
 vision/scripts/train_vit.sh
 
 # Fast smoke test
-vision/scripts/train_cnn.sh --epochs 1 --limit-train 512 --limit-val 128 --limit-test 128 --wandb-mode offline
+vision/scripts/train_cnn.sh --debug
 ```
+
+## Config-First Training
+
+Training is driven by Hydra/OmegaConf YAML configs:
+
+```bash
+.venv/bin/python -m vision.train
+.venv/bin/python -m vision.train --config-name vit
+```
+
+Use Hydra-style command-line overrides:
+
+```bash
+vision/scripts/train_cnn.sh experiment.run_name=cnn-test experiment.seed=123 logging.use_wandb=false
+```
+
+```bash
+vision/scripts/train_cnn.sh \
+  train.lr=1.0e-3 \
+  train.batch_size=256 \
+  logging.wandb_group=cifar10-ablation
+```
+
+Use `debug=true` for a tiny offline smoke run:
+
+```bash
+vision/scripts/train_cnn.sh debug=true logging.use_wandb=false
+```
+
+Keep secrets and machine-specific settings in `.env`, such as `WANDB_API_KEY`, `HF_TOKEN`, `DEVICE`, `CUDA_VISIBLE_DEVICES`, and output/cache roots. Keep experiment hyperparameters in YAML or Hydra overrides.
 
 ## Embedding t-SNE
 
@@ -80,11 +111,11 @@ You can choose classes explicitly:
 vision/scripts/run_neighbors.sh --classes airplane cat ship truck frog
 ```
 
-The code reads `.env` through `python-dotenv`. Useful fields include:
+The code reads `.env` through `python-dotenv`. Useful environment fields include:
 
 - `WANDB_API_KEY`, `WANDB_PROJECT`, `WANDB_ENTITY`, `WANDB_MODE`
 - `OUTPUT_DIR`, `CHECKPOINT_DIR`, `LOG_DIR`, `CACHE_DIR`
-- `SEED`, `DEVICE`, `BATCH_SIZE`
+- `DEVICE`, `CUDA_VISIBLE_DEVICES`
 
 ## Logging
 
@@ -106,13 +137,8 @@ wandb sync logs/vision/<run-name>/wandb/offline-run-*
 
 ```bash
 .venv/bin/python -m vision.train \
-  --model cnn \
-  --epochs 20 \
-  --batch-size 128 \
-  --lr 3e-4 \
-  --weight-decay 0.05 \
-  --use-wandb \
-  --use-tensorboard
+  train.epochs=20 \
+  train.lr=3.0e-4
 ```
 
-Use `--model vit` to switch to the transformer. Use `--no-use-wandb` or `--no-use-tensorboard` to disable either logger.
+Use `--config-name vit` to switch to the transformer. Use `logging.use_wandb=false` or `logging.use_tensorboard=false` to disable either logger.

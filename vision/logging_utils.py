@@ -44,7 +44,9 @@ class ExperimentLogger:
                 mode=args.wandb_mode,
                 dir=str(run_dir),
                 config=vars(args),
-                tags=[args.model, "cifar10", "from-scratch"],
+                group=getattr(args, "wandb_group", "") or None,
+                job_type=getattr(args, "wandb_job_type", "train"),
+                tags=getattr(args, "wandb_tags", [args.model, "cifar10", "from-scratch"]),
             )
             wandb.config.update({"tracked_env": _tracked_env()}, allow_val_change=True)
 

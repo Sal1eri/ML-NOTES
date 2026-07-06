@@ -91,5 +91,5 @@ Thumbs.db
 
 # Customized
 mydatasets/
-
+!vision/models
 .opencode/

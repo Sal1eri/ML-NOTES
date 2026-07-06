@@ -1,62 +1,31 @@
 from __future__ import annotations
 
-import argparse
-import os
 import random
 from datetime import datetime
 from pathlib import Path
 
+import hydra
 import numpy as np
 import torch
 from dotenv import load_dotenv
+from omegaconf import DictConfig
 from torch import nn
 
+from vision.config import apply_debug_overrides, flatten_config, save_resolved_yaml
 from vision.data import make_dataloaders, take_batch
 from vision.engine import evaluate, save_checkpoint, train_one_epoch
 from vision.logging_utils import ExperimentLogger, save_run_config
 from vision.models import build_model
 
 
-def parse_args() -> argparse.Namespace:
-    load_dotenv()
-    parser = argparse.ArgumentParser(description="Train from-scratch CNN/ViT models on HuggingFace CIFAR-10.")
-    parser.add_argument("--model", choices=["cnn", "vit"], default="cnn")
-    parser.add_argument("--dataset-name", default="uoft-cs/cifar10")
-    parser.add_argument("--data-dir", default=os.getenv("DATA_DIR", "./data"))
-    parser.add_argument("--cache-dir", default=os.getenv("CACHE_DIR", "./cache"))
-    parser.add_argument("--output-dir", default=os.getenv("OUTPUT_DIR", "./outputs"))
-    parser.add_argument("--checkpoint-dir", default=os.getenv("CHECKPOINT_DIR", "./checkpoints"))
-    parser.add_argument("--log-dir", default=os.getenv("LOG_DIR", "./logs"))
-    parser.add_argument("--run-name", default="")
-    parser.add_argument("--seed", type=int, default=int(os.getenv("SEED", "42")))
-    parser.add_argument("--device", default=os.getenv("DEVICE", "cuda"))
-
-    parser.add_argument("--epochs", type=int, default=20)
-    parser.add_argument("--batch-size", type=int, default=int(os.getenv("BATCH_SIZE", "128")))
-    parser.add_argument("--lr", type=float, default=3e-4)
-    parser.add_argument("--weight-decay", type=float, default=0.05)
-    parser.add_argument("--num-workers", type=int, default=4)
-    parser.add_argument("--validation-size", type=float, default=0.1)
-    parser.add_argument("--use-amp", action="store_true")
-
-    parser.add_argument("--limit-train", type=int, default=0, help="0 means use the full split.")
-    parser.add_argument("--limit-val", type=int, default=0, help="0 means use the full split.")
-    parser.add_argument("--limit-test", type=int, default=0, help="0 means use the full split.")
-
-    parser.add_argument("--use-tensorboard", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--use-wandb", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--wandb-project", default=os.getenv("WANDB_PROJECT", "vision-cifar10"))
-    parser.add_argument("--wandb-entity", default=os.getenv("WANDB_ENTITY", ""))
-    parser.add_argument("--wandb-mode", default=os.getenv("WANDB_MODE", "online"))
-    parser.add_argument("--wandb-watch-freq", type=int, default=200)
-    parser.add_argument("--log-every", type=int, default=20)
-    parser.add_argument("--hist-every", type=int, default=200)
-    parser.add_argument("--num-visualize", type=int, default=16)
-    return parser.parse_args()
+load_dotenv()
 
 
-def main() -> None:
-    args = parse_args()
+@hydra.main(version_base=None, config_path="../configs/vision", config_name="cnn")
+def main(cfg: DictConfig) -> None:
+    if cfg.get("debug", False):
+        cfg = apply_debug_overrides(cfg)
+    args = flatten_config(cfg)
     if not args.run_name:
         args.run_name = f"{args.model}-cifar10-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     args.cache_dir = str(Path(args.cache_dir) / "huggingface")
@@ -91,6 +60,7 @@ def main() -> None:
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
     save_run_config(args, run_dir)
+    save_resolved_yaml(cfg, run_dir)
     logger = ExperimentLogger(args, log_dir, dataloaders.class_names)
     logger.watch_model(model)
 
@@ -133,7 +103,8 @@ def main() -> None:
             best_val_acc = val_metrics["acc"]
             best_path = checkpoint_dir / "best.pt"
             save_checkpoint(best_path, model, optimizer, scheduler, epoch, best_val_acc, args)
-            logger.log_checkpoint(best_path, best_val_acc, aliases=["best", f"epoch-{epoch}"])
+            if args.log_checkpoints_to_wandb:
+                logger.log_checkpoint(best_path, best_val_acc, aliases=["best", f"epoch-{epoch}"])
 
         print(
             f"epoch={epoch:03d} train_loss={train_metrics['loss']:.4f} "

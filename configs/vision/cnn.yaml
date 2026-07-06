@@ -1,0 +1,47 @@
+debug: false
+
+experiment:
+  model: cnn
+  run_name: ""
+  seed: 42
+  device: ${oc.env:DEVICE,cuda}
+
+data:
+  dataset_name: uoft-cs/cifar10
+  data_dir: ${oc.env:DATA_DIR,./data}
+  cache_dir: ${oc.env:CACHE_DIR,./cache}
+  validation_size: 0.1
+  num_workers: 4
+  limit_train: 0
+  limit_val: 0
+  limit_test: 0
+
+train:
+  epochs: 20
+  batch_size: 128
+  lr: 3.0e-4
+  weight_decay: 0.05
+  use_amp: true
+
+logging:
+  output_dir: ${oc.env:OUTPUT_DIR,./outputs}
+  checkpoint_dir: ${oc.env:CHECKPOINT_DIR,./checkpoints}
+  log_dir: ${oc.env:LOG_DIR,./logs}
+  use_tensorboard: true
+  use_wandb: true
+  wandb_project: ${oc.env:WANDB_PROJECT,PaMM}
+  wandb_entity: ${oc.env:WANDB_ENTITY,""}
+  wandb_mode: ${oc.env:WANDB_MODE,online}
+  wandb_group: cifar10-from-scratch
+  wandb_job_type: train
+  wandb_tags: [cnn, cifar10, from-scratch]
+  wandb_watch_freq: 200
+  log_every: 20
+  hist_every: 200
+  num_visualize: 16
+  log_checkpoints_to_wandb: true
+
+hydra:
+  job:
+    chdir: false
+  output_subdir: null
